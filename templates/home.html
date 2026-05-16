@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Armstrong Machine performance</title>
+<style>
+  :root{
+  --burgundy:#5e1313ff; --burgundy-800:#4f0a10;
+  --ink:#0c1b3a; --muted:#6b7280;
+  --card:#ffffff; --bg:#ffffff; --border:#e5e7eb;
+  --green:#2e7d32;
+  --sidebar-w:280px;
+  --topbar-h:60px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Segoe UI", Roboto, system-ui, -apple-system, Arial, sans-serif;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  overflow:hidden; /* we’ll scroll the main area */
+}
+
+/* ---------------- Topbar (fixed) ---------------- */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--topbar-h);
+  background: var(--burgundy);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 40;
+}
+
+.nav-toggle{ display:none !important; } /* no hamburger needed */
+.nav-toggle svg{width:18px;height:18px;display:block}
+.page-title h1{margin:0; font-size:17px; letter-spacing:.02em; color:#fff; text-align:center;}
+.today-pill{border:1px solid var(--border); background:#fff; padding:2px 12px; border-radius:6px; font-size:14px; font-weight:600;}
+@media (max-width:427px){ .page-title h1{ font-size:12px !important; } }
+
+/* ---------------- Sidebar (ALWAYS VISIBLE) ---------------- */
+.sidebar{
+  position:fixed;
+  left:0; top:var(--topbar-h);
+  height:calc(100vh - var(--topbar-h));
+  width:var(--sidebar-w);
+  padding:18px 14px;
+  overflow:auto;
+  background:linear-gradient(180deg,var(--burgundy) 0%, var(--burgundy-800) 100%);
+  color:#fff;
+  border-right:1px solid rgba(0,0,0,.08);
+  display:flex;
+  flex-direction:column;
+}
+
+/* Brand */
+.brand{display:flex; align-items:center; gap:14px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,.15);}
+.brand .logo{width:46px;height:46px;border-radius:10px;background:#efeae6;display:flex;justify-content:center;align-items:center;overflow:hidden;}
+.brand .logo img{width:120%;height:120%;object-fit:contain}
+.brand .title{line-height:1.1}
+.brand .title small{display:block;font-size:12px;opacity:.9}
+
+/* Bottom buttons */
+.nav-buttons{ margin-top:auto; display:flex; flex-direction:column; gap:10px; }
+.btn-nav{
+  display:block; width:100%; text-align:center;
+  padding:10px 14px; border-radius:10px;
+  background:#fff; color:var(--burgundy-800); text-decoration:none; font-weight:600;
+  border:2px solid rgba(177,154,7,0.35); transition:.2s;
+}
+.btn-nav:hover{ background: rgb(227, 209, 116); color:#fff; }
+
+/* ---------------- Main area (scrolls) ---------------- */
+.main{
+  position:relative; height:100vh; overflow:auto;
+  background:#fff; padding:22px;
+  padding-top:calc(var(--topbar-h) + 12px);
+  margin-left:var(--sidebar-w);          /* always pushed right */
+}
+
+/* Cards, charts, etc. (unchanged from your styles) */
+.kpis{display:grid; grid-template-columns:repeat(4, minmax(160px, 1fr)); gap:14px; margin-top:14px}
+.kpi{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px 16px;}
+.kpi .k-label{font-size:12px; color:var(--muted); letter-spacing:.05em; text-transform:uppercase}
+.kpi .k-value{margin-top:4px; font-size:28px; font-weight:700}
+.kpi .k-trend{margin-top:8px; font-size:12px; color:var(--green)}
+.grid{display:grid; gap:14px; grid-template-columns:repeat(12, 1fr); margin-top:14px}
+.card{background:#fff; border:1px solid var(--border); border-radius:16px; padding:14px; min-height:260px; display:flex; flex-direction:column;}
+.card .title{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
+.card .title h3{margin:0; font-size:14px; letter-spacing:.05em; text-transform:uppercase; color:var(--burgundy)}
+.chart{flex:1; border-radius:12px; background:linear-gradient(180deg,#fcfcfd,#f9fafb); border:1px dashed #e5e7eb; display:grid; place-items:center; color:#9aa1ac}
+.span-6{grid-column:span 6;} .span-8{grid-column:span 8;} .span-4{grid-column:span 4;} .span-12{grid-column:1 / -1;}
+.foot{margin:12px 2px 4px; color:#6b7280; font-size:12px;}
+
+/* Idle line chart bits */
+.idle-line{stroke:#035277; stroke-width:4; fill:none; stroke-linecap:round;}
+.idle-line--glow{stroke:#2396c3; stroke-width:8; opacity:.35; fill:none; stroke-linecap:round;}
+.idle-dot{fill:#86ddff; stroke:#0b648e; stroke-width:2;}
+
+/* Responsive cards only (sidebar stays fixed) */
+@media (max-width:900px){
+  .kpis{grid-template-columns:repeat(2, 1fr)}
+  .span-6,.span-8,.span-4,.span-12{grid-column:1 / -1}
+}
+
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- ===== TOPBAR ===== -->
+<div class="topbar">
+  <button id="navToggle" class="nav-toggle" aria-label="Toggle navbar" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    
+  </button>
+  <div class="page-title"><h1>Knitting – Production Dashboard</h1></div>
+  <div>
+    <span style="font-size:14px;color:white">Today</span>
+    <span id="todayLabel" class="today-pill">—</span>
+  </div>
+</div>
+
+<!-- ===== FIXED SIDEBAR ===== -->
+<aside id="sidebar" class="sidebar" aria-label="Navigation">
+
+  <!-- Brand / Logo -->
+  <div class="brand">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='fabvi_logo.png') }}" alt="Texa logo">
+    </div>
+    <div class="title">
+      <strong>Armstrong</strong>
+      <small>Knitting Dashboard</small>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Buttons -->
+  <div class="nav-buttons">
+    <a class="btn-nav" href="{{ url_for('index') }}"> Home</a>
+    <a class="btn-nav" href="{{ url_for('machines') }}"> Machine</a>
+  </div>
+
+</aside>
+
+<!-- ===== MAIN (ALWAYS SCROLLS) ===== -->
+<main id="main" class="main">
+  <!-- KPIs -->
+   <section class="kpis">
+        <div class="kpi"><div class="k-label">Machines</div><div class="k-value">{{content.machine_no}}</div><div class="k-trend">+1 active today</div></div>
+        <div class="kpi"><div class="k-label">Total Defects</div><div class="k-value">{{content.total_defect}}</div><div class="k-trend">-6% vs last week</div></div>
+        <div class="kpi"><div class="k-label">Rolls Count</div><div class="k-value">{{content.rolls_count}}</div><div class="k-trend">+3 new rolls</div></div>
+      </section>
+
+  <!-- Charts -->
+  <section class="grid">
+    <div class="card span-12">
+
+
+      
+
+     <!-- <div class="card span-6"> -->
+          <div class="title"><h3>ROLLS BY DATE</h3><span class="legend">Bar</span></div>
+          <div class="chart chart--rose">
+            <svg class="svg" viewBox="0 0 950 260" preserveAspectRatio="none" aria-label="rolls-purple-bars">
+              <defs>
+                <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="0">
+                  <stop offset="0%" stop-color="#caa5ff"/><stop offset="55%" stop-color="#9b5ed1"/><stop offset="100%" stop-color="#6d3fa6"/>
+                </linearGradient>
+                <filter id="barShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity=".25"/>
+                </filter>
+              </defs>
+
+              <g transform="translate(40,15)">
+                <g class="rolls-axis">
+                  <line x1="0" y1="200" x2="560" y2="200"/>
+                  <line x1="0" y1="0"   x2="0"   y2="200"/>
+                </g>
+
+                <g filter="url(#barShadow)" fill="url(#barGrad)">
+                  <rect class="bar" style="--d:.05s" x="10"  y="{{200-content.date_by_rolls_list.per_1 | default(0)}}" width="30" height="{{content.date_by_rolls_list.per_1 | default(0)}}" rx="6"/>
+                  <rect class="bar" style="--d:.10s" x="65"  y="{{200-content.date_by_rolls_list.per_2 | default(0)}}" width="30" height="{{content.date_by_rolls_list.per_2 | default(0)}}" rx="6"/>
+                  <rect class="bar" style="--d:.15s" x="120" y="{{200-content.date_by_rolls_list.per_3 | default(0)}}"  width="30" height="{{content.date_by_rolls_list.per_3 | default(0)}}" rx="6"/>
+                  <rect class="bar" style="--d:.20s" x="175" y="{{200-content.date_by_rolls_list.per_4 | default(0)}}"  width="30" height="{{content.date_by_rolls_list.per_4 | default(0)}}" rx="6"/>
+                  <rect class="bar" style="--d:.25s" x="230" y="{{200-content.date_by_rolls_list.per_5 | default(0)}}" width="30" height="{{content.date_by_rolls_list.per_5 | default(0)}}" rx="6"/>
+                  <rect class="bar" style="--d:.30s" x="285" y="{{200-content.date_by_rolls_list.per_6 | default(0)}}"  width="30" height="{{content.date_by_rolls_list.per_6 | default(0)}}" rx="6"/>
+                  <rect class="bar" style="--d:.35s" x="340" y="{{200-content.date_by_rolls_list.per_7 | default(0)}}" width="30" height="{{content.date_by_rolls_list.per_7 | default(0)}}" rx="6"/>
+                  <rect class="bar" style="--d:.40s" x="395" y="{{200-content.date_by_rolls_list.per_8 | default(0)}}" width="30" height="{{content.date_by_rolls_list.per_8 | default(0)}}" rx="6"/>
+                  <rect class="bar" style="--d:.45s" x="450" y="{{200-content.date_by_rolls_list.per_9 | default(0)}}" width="30" height="{{content.date_by_rolls_list.per_9 | default(0)}}" rx="6"/>
+                  <rect class="bar" style="--d:.50s" x="505" y="{{200-content.date_by_rolls_list.per_10 | default(0)}}" width="30" height="{{content.date_by_rolls_list.per_10 | default(0)}}" rx="6"/>
+                </g>
+
+                <g class="rolls-date" text-anchor="middle" font-size="10">
+                  <text x="25"  y="{{195-content.date_by_rolls_list.per_1 | default(0)}}">{{content.date_by_rolls_list.day_1_count}}</text>
+                  <text x="80"  y="{{195-content.date_by_rolls_list.per_2 | default(0)}}">{{content.date_by_rolls_list.day_2_count}}</text>
+                  <text x="135" y="{{195-content.date_by_rolls_list.per_3 | default(0)}}">{{content.date_by_rolls_list.day_3_count}}</text>
+                  <text x="190" y="{{195-content.date_by_rolls_list.per_4 | default(0)}}">{{content.date_by_rolls_list.day_4_count}}</text>
+                  <text x="245" y="{{195-content.date_by_rolls_list.per_5 | default(0)}}">{{content.date_by_rolls_list.day_5_count}}</text>
+                  <text x="300" y="{{195-content.date_by_rolls_list.per_6 | default(0)}}">{{content.date_by_rolls_list.day_6_count}}</text>
+                  <text x="355" y="{{195-content.date_by_rolls_list.per_7 | default(0)}}">{{content.date_by_rolls_list.day_7_count}}</text>
+                  <text x="410" y="{{195-content.date_by_rolls_list.per_8 | default(0)}}">{{content.date_by_rolls_list.day_8_count}}</text>
+                  <text x="465" y="{{195-content.date_by_rolls_list.per_9 | default(0)}}">{{content.date_by_rolls_list.day_9_count}}</text>
+                  <text x="520" y="{{195-content.date_by_rolls_list.per_10 | default(0)}}">{{content.date_by_rolls_list.day_10_count}}</text>
+                </g>
+
+                 <g class="rolls-date" text-anchor="middle" font-size="11">
+                  <text x="25"  y="218">{{content.date_by_rolls_list.date_1}}</text>
+                  <text x="80"  y="218">{{content.date_by_rolls_list.date_2}}</text>
+                  <text x="135" y="218">{{content.date_by_rolls_list.date_3}}</text>
+                  <text x="190" y="218">{{content.date_by_rolls_list.date_4}}</text>
+                  <text x="245" y="218">{{content.date_by_rolls_list.date_5}}</text>
+                  <text x="300" y="218">{{content.date_by_rolls_list.date_6}}</text>
+                  <text x="355" y="218">{{content.date_by_rolls_list.date_7}}</text>
+                  <text x="410" y="218">{{content.date_by_rolls_list.date_8}}</text>
+                  <text x="465" y="218">{{content.date_by_rolls_list.date_9}}</text>
+                  <text x="520" y="218">{{content.date_by_rolls_list.date_10}}</text>
+                </g>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+    
+    <div class="card span-6">
+      <div class="title"><h3>Idle by roll</h3><span class="legend">Line</span></div>
+  <div class="chart chart--peach">
+    <svg class="svg" viewBox="0 0 600 220" preserveAspectRatio="none" aria-label="idle-line-chart">
+      <defs>
+        <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="dotShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#b66b00" flood-opacity=".35"/>
+        </filter>
+      </defs>
+
+      <g transform="translate(30,14)">
+        <!-- Axes -->
+        <line class="line-axis" x1="0" y1="180" x2="560" y2="180"/>
+        <line class="line-axis" x1="0" y1="0"   x2="0"   y2="180"/>
+
+        {% set idle = content.idle_data if content.idle_data is defined else {} %}
+        {% set vals = [] %}
+        {% set labels = [] %}
+
+        {% for j in range(0, 10) %}
+          {% set i = 10 - j %}
+          {# safely get value; default 0 if missing #}
+          {% set raw = idle.get('roll_' ~ i, 0) %}
+
+          {# numeric value in minutes #}
+          {% if raw is mapping and 'value' in raw %}
+            {% set v = raw.value|float %}
+          {% elif raw is string %}
+            {% set p = raw.split(' ') %}
+            {% set num = (p[0]|float) if p|length>0 else 0 %}
+            {% set unit = (p[1]|lower) if p|length>1 else '' %}
+            {% if 'hr' in unit or 'hour' in unit %}
+              {% set v = num * 60 %}
+            {% elif 'sec' in unit %}
+              {% set v = num / 60 %}
+            {% else %}
+              {% set v = num %}
+            {% endif %}
+          {% else %}
+            {% set v = raw|float %}
+          {% endif %}
+
+          {# label to show #}
+          {% if raw is mapping and 'label' in raw %}
+            {% set lab = raw.label %}
+          {% elif raw is string %}
+            {% set lab = raw %}
+          {% else %}
+            {% if v < 60 %}
+              {% set lab = (v|round(0)|int)|string + ' min' %}
+            {% else %}
+              {% set lab = ((v/60)|round(1))|string + ' hr' %}
+            {% endif %}
+          {% endif %}
+
+          {% set _ = vals.append(v) %}
+          {% set _ = labels.append(lab) %}
+        {% endfor %}
+
+
+        {# --- Scale --- #}
+        {% set max_v = (vals|max)|default(0.0) %}
+        {% set usable = 150.0 %}
+        {% set scale = usable / (max_v if max_v>0 else 1.0) %}
+        {% set baseline = 180 %}
+        {% set step = 56 %}
+
+        {# --- Points string --- #}
+        {% set pts = [] %}
+        {% for k in range(0, 10) %}
+          {% set x = k * step %}
+          {% set y = baseline - (vals[k] * scale) %}
+          {% set _ = pts.append(x ~ ',' ~ y) %}
+        {% endfor %}
+
+        <!-- Lines -->
+        <polyline class="idle-line--glow draw" filter="url(#lineGlow)" points="{{ ' '.join(pts) }}"/>
+        <polyline class="idle-line draw" points="{{ ' '.join(pts) }}"/>
+
+        <!-- Dots -->
+        <g filter="url(#dotShadow)">
+          {% for k in range(0, 10) %}
+            {% set x = k * step %}
+            {% set y = baseline - (vals[k] * scale) %}
+            <circle class="idle-dot" cx="{{ x }}" cy="{{ y }}" r="4"/>
+          {% endfor %}
+        </g>
+
+        <!-- Value labels above dots -->
+        <g fill="#1f2937" font-size="11" font-weight="700" text-anchor="middle">
+          {% for k in range(0, 10) %}
+            {% set x = k * step %}
+            {% set y = baseline - (vals[k] * scale) - 8 %}
+            <text x="{{ x }}" y="{{ y }}">{{ labels[k] }}</text>
+          {% endfor %}
+        </g>
+
+        <!-- Bottom roll IDs in reverse (roll_10..roll_1) -->
+        <g fill="#6b7280" font-size="11" font-weight="600" text-anchor="middle">
+          {% for j in range(0, 10) %}
+            {% set i = 10 - j %}
+            {% set x = j * step %}
+            <text x="{{ x }}" y="196">{{ content.rolls_id.get('roll_' ~ i, '') }}</text>
+          {% endfor %}
+        </g>
+      </g>
+    </svg>
+  </div>
+    </div>
+
+    <div class="card span-6">
+                <div class="card span-8">
+  <div class="title"><h3>Roll ID by Defects</h3><span class="legend">Column</span></div>
+  <div class="chart">
+    <svg class="svg" viewBox="0 0 500 230" preserveAspectRatio="none" aria-label="column-chart">
+      {% set baseline = 200 %}
+      {% set step = 40 %}
+      {% set bar_w = 20 %}
+      {% set scale = 3.0 %}  {# 100% -> 300px, clipped by baseline #}
+
+      <!-- Dynamic bars + % labels (reverse: roll_10..roll_1) -->
+      <g fill="#e1172b" opacity=".8">
+        {% for j in range(0, 10) %}
+          {% set i = 10 - j %}
+          {% set pct = (content.roll_defects_percent.get('roll_' ~ i, 0) | float) %}
+          {% set x = 60 + j*step %}
+          {% set h = pct * scale %}
+          {% set y = baseline - h %}
+
+          <rect class="bar" x="{{ x }}" y="{{ y }}" width="{{ bar_w }}" height="{{ h|round(2) }}" rx="3"></rect>
+          <text x="{{ x + bar_w/2 }}" y="{{ y - 6 }}" text-anchor="middle" font-size="11" fill="#1f2937">
+            {{ pct|round(0) }}%
+          </text>
+        {% endfor %}
+      </g>
+
+      <!-- Bottom roll labels (reverse: roll_10..roll_1) -->
+      <g fill="#6b7280" font-size="11" font-weight="600" text-anchor="middle">
+        {% for j in range(0, 10) %}
+          {% set i = 10 - j %}
+          {% set x = 60 + j*step + bar_w/2 %}
+          <text x="{{ x }}" y="218">{{ content.rolls_id.get('roll_' ~ i, '') }}</text>
+        {% endfor %}
+      </g>
+    </svg>
+  </div>
+</div>
+
+    <!-- </div>
+     <div class="card span-6">
+      <div class="title"><h3>Idle Minutes Over Time</h3><span class="legend"></span></div>
+      <div class="chart"><canvas id="idleLine"></canvas></div>
+    </div> -->
+  </section>
+
+  <div class="foot">© Texa Innovates – Corporate Template v1.0</div>
+</main>
+
+<script>
+  // --- Today label + midnight refresh ---
+function setTodayLabel() {
+  const now = new Date();
+  const el = document.getElementById('todayLabel');
+  if (!el) return;
+
+  const options = { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' };
+  const formatted = now.toLocaleDateString('en-US', options);
+
+  // formatted e.g.: "Saturday, Nov 08, 2025"
+  const clean = formatted.replace(/,/g, ""); 
+  // "Saturday Nov 08 2025"
+
+  const parts = clean.split(" "); 
+  // ["Saturday", "Nov", "08", "2025"]
+
+  const weekday = parts[0];
+  const month = parts[1];
+  const day = parts[2];
+  const year = parts[3];
+
+  el.textContent = `${weekday}  ${day} / ${month} / ${year}`;
+}
+
+
+
+  // --- Charts (no filters now) ---
+  let charts = {};
+  function destroy(id){ charts[id]?.destroy(); }
+
+  async function drawLine(id, url, label){
+    try{
+      const r = await fetch(url);
+      const rows = await r.json();
+      const labels = rows.map(o=>o.x), values = rows.map(o=>o.y);
+      const ctx = document.getElementById(id);
+      if (!ctx) return;
+      destroy(id);
+      charts[id] = new Chart(ctx, {
+        type:'line',
+        data:{ labels, datasets:[{ label, data:values, tension:.25, fill:false }] }
+      });
+    }catch(_){}
+  }
+
+  async function drawBar(id, url, label){
+    try{
+      const r = await fetch(url);
+      const rows = await r.json();
+      const labels = rows.map(o=>o.label), values = rows.map(o=>o.value);
+      const ctx = document.getElementById(id);
+      if (!ctx) return;
+      destroy(id);
+      charts[id] = new Chart(ctx, {
+        type:'bar',
+        data:{ labels, datasets:[{ label, data:values }] }
+      });
+    }catch(_){}
+  }
+
+  // No filters anymore -> no query string
+  function buildQuery(){ return ''; }
+
+  async function refreshAll(){
+    const qs = buildQuery();
+    await Promise.allSettled([
+      drawLine('defectsLine', `/api/defects${qs}`, 'Defects'),
+      drawBar('defectsTypeBar', `/api/defects/by-type${qs}`, 'Defects by Type'),
+      drawLine('idleLine', `/api/idle${qs}`, 'Idle Minutes'),
+    ]);
+  }
+
+  // --- Init (no nav-open toggling, no auto-close) ---
+  window.addEventListener('DOMContentLoaded', ()=>{
+    setTodayLabel();
+    scheduleMidnightRefresh();
+    refreshAll();
+  });
+</script>
+
