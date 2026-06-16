@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yarn - Machine Details</title>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <link rel="stylesheet" href="../static/css/all.min.css" />
+    <link rel="stylesheet" href="../static/css/index.css" />
+  </head>
+  <body>
+    <div id="app" style="display: flex">
+      <nav class="top-nav">
+        <div class="nav-logo">
+          <img
+            src="../static/img/logo.png"
+            alt="Logo"
+            onerror="this.style.display = 'none'"
+          />
+        </div>
+        <div class="nav-right">
+          <div class="nav-avatar" id="user-avatar">AD</div>
+          <span class="nav-name" id="user-name">Admin</span>
+          <button class="btn-signout" onclick="handleLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i>Sign out
+          </button>
+        </div>
+      </nav>
+
+      <div class="app-body">
+        <main class="main-area">
+          <div class="page active">
+            <div class="page-header machine-page-header">
+              <div class="page-header-left">
+                <div class="machine_image_div">
+                  <div>
+                    <img
+                      class="machine-detail-photo"
+                      id="machine-photo"
+                      src="../static/img/machine_image.jpeg"
+                      alt="Machine"
+                    />
+                  </div>
+                  <div>
+                    <div class="page-crumb">
+                      <i class="fa-solid fa-industry"></i>Production Monitor
+                    </div>
+                    <h2 class="page-title">Machine Details</h2>
+                    <p class="page-subtitle">
+                      Live machine status, doff timing and production quality
+                      summary.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-actions">
+                <a class="action-link" href="index.html">
+                  <i class="fa-solid fa-arrow-left"></i> Dashboard
+                </a>
+                <a
+                  class="action-link primary"
+                  id="report-link"
+                  href="report.html"
+                >
+                  <i class="fa-solid fa-file-lines"></i> Report
+                </a>
+              </div>
+            </div>
+
+            <div class="page-body machine-details-page" id="details-body">
+              <section class="machine-detail-overview">
+                <div class="machine-detail-visual d-none"></div>
+                <div class="machine-detail-intro">
+                  <div class="machine_div_heading">
+                    <div class="mr-15">
+                      <div class="machine-detail-eyebrow">Machine Overview</div>
+                      <h1 id="machine-detail-title">Loading machine...</h1>
+                    </div>
+                    <div
+                      class="machine-detail-time-strip"
+                      id="machine-detail-time-strip"
+                    >
+                      loading...
+                    </div>
+                  </div>
+
+                  <div class="machine_div_side_align">
+                    <p
+                      class="machine_status"
+                      id="machine-status"
+                    >
+                      Loading
+                    </p>
+                    <p style="height: 65px"></p>
+                    <p
+                      style="font-size: 18px; font-weight: 600"
+                      id="machine-detail-subtitle"
+                    >
+                      Latest doff and production details
+                    </p>
+                  </div>
+
+                  <div class="d-none">
+                    <div
+                      class="machine-detail-meta"
+                      id="machine-detail-meta"
+                    ></div>
+                    <div class="machine-detail-kpis" id="detail-kpis"></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="detail-info-grid">
+                <article class="detail-panel detail-panel-wide">
+                  <div class="detail-panel-head">
+                    <span><i class="fa-solid fa-chart-bar"></i></span>
+                    <strong>Production Summary</strong>
+                  </div>
+                  <div class="detail-metric-grid" id="production-info"></div>
+                </article>
+                <article class="detail-panel d-none">
+                  <div class="detail-panel-head">
+                    <span><i class="fa-solid fa-file-lines"></i></span>
+                    <strong>FR Information</strong>
+                  </div>
+                  <div class="detail-row-list" id="fr-info"></div>
+                </article>
+              </section>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../static/script/machine-details.js"></script>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+# ================== Python ==================
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ================== Virtual environments ==================
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+ENV/
+
+# ================== Build output ==================
+build/
+dist/
+*.egg-info/
+
+# ================== Logs and runtime files ==================
+*.log
+*.pid
+*.tmp
+*.temp
+
+# ================== Local binaries and databases ==================
+*.dll
+*.lib
+*.exe
+*.pdb
+*.pyd
+*.db
+*.sqlite
+*.sqlite3
+ 
+# ================== Editor and OS files ==================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

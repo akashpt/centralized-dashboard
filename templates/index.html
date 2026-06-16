@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yarn - Dashboard</title>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <link rel="stylesheet" href="../static/css/all.min.css" />
+    <link rel="stylesheet" href="../static/css/index.css" />
+  </head>
+  <body>
+    <div id="login-page">
+      <div class="lp-form">
+        <div class="lf-logo">
+          <img src="../static/img/logo.png" alt="Logo" />
+        </div>
+        <h1>Welcome back</h1>
+        <p>Sign in to your production dashboard</p>
+
+        <div class="lf-field">
+          <label for="username"
+            ><i class="fa-regular fa-user"></i>Username</label
+          >
+          <input
+            type="text"
+            id="username"
+            placeholder="Username"
+            autocomplete="username"
+          />
+          <div class="lf-err" id="username-error">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            Enter your username.
+          </div>
+        </div>
+
+        <div class="lf-field">
+          <label for="password"><i class="fa-solid fa-lock"></i>Password</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            autocomplete="current-password"
+          />
+          <div class="lf-err" id="password-error">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            Enter your password.
+          </div>
+        </div>
+
+        <button class="btn-login" id="signin-btn" onclick="handleLogin()">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          Sign In
+        </button>
+      </div>
+    </div>
+
+    <div id="app" style="display: none">
+      <nav class="top-nav">
+        <div class="nav-logo">
+          <img src="../static/img/logo.png" alt="Logo" />
+        </div>
+        <div class="nav-right">
+          <div class="nav-avatar" id="user-avatar">AD</div>
+          <span class="nav-name" id="user-name">Admin</span>
+          <button class="btn-signout" onclick="handleLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i>Sign out
+          </button>
+        </div>
+      </nav>
+
+      <div class="app-body">
+        <main class="main-area">
+          <div class="page active" id="page-machines">
+            <div class="page-header">
+              <div class="page-header-left">
+                
+                <h2 class="page-title">Machines</h2>
+              </div>
+              <div class="filter-row">
+                <a class="filter-pill menu-link-pill" href="slider-machine.html">
+                  <i class="fa-solid fa-sliders"></i>
+                  slidermachine
+                </a>
+                <button
+                  class="filter-pill active"
+                  onclick="filterMachines('all', this)"
+                >
+                  <span class="fdot" style="background: var(--green-bg)"></span>
+                  All<span class="fcount" data-count="all">0</span>
+                </button>
+                <button
+                  class="filter-pill"
+                  onclick="filterMachines('running', this)"
+                >
+                  <span class="fdot" style="background: var(--green)"></span>
+                  Running<span class="fcount" data-count="running">0</span>
+                </button>
+                <button
+                  class="filter-pill"
+                  onclick="filterMachines('stopped', this)"
+                >
+                  <span class="fdot" style="background: var(--brand)"></span>
+                  Stopped<span class="fcount" data-count="stopped">0</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="page-body dashboard-body">
+              <div
+                class="machine-grid mb-15 dashboard-machine-grid"
+                id="machine-grid"
+              ></div>
+              <div
+                class="stat-grid dashboard-summary"
+                style="grid-template-columns: repeat(3, 1fr)"
+              >
+                <div
+                  class="stat-card"
+                  style="border-top-color: var(--text-dim)"
+                >
+                  <div
+                    class="stat-icon-wrap"
+                    style="
+                      --icon-bg: rgba(85, 96, 112, 0.08);
+                      --icon-color: var(--text-dim);
+                    "
+                  >
+                    <i class="fa-solid fa-gears"></i>
+                  </div>
+                  <div class="stat-label">Total</div>
+                  <div class="stat-val" data-count="all">0</div>
+                </div>
+                <div class="stat-card" style="border-top-color: var(--green)">
+                  <div
+                    class="stat-icon-wrap"
+                    style="
+                      --icon-bg: rgba(22, 163, 74, 0.1);
+                      --icon-color: var(--green);
+                    "
+                  >
+                    <i class="fa-solid fa-circle-play"></i>
+                  </div>
+                  <div class="stat-label">Running</div>
+                  <div class="stat-val color-green" data-count="running">0</div>
+                </div>
+                <div class="stat-card" style="border-top-color: var(--brand)">
+                  <div
+                    class="stat-icon-wrap"
+                    style="
+                      --icon-bg: rgba(123, 13, 24, 0.08);
+                      --icon-color: var(--brand);
+                    "
+                  >
+                    <i class="fa-solid fa-circle-stop"></i>
+                  </div>
+                  <div class="stat-label">Stopped</div>
+                  <div class="stat-val color-brand" data-count="stopped">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../static/script/index.js"></script>
+  </body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yarn - Report</title>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <link rel="stylesheet" href="../static/css/all.min.css" />
+    <link rel="stylesheet" href="../static/css/index.css" />
+  </head>
+  <body>
+    <div id="app" style="display: flex">
+      <nav class="top-nav">
+        <div class="nav-logo">
+          <img
+            src="../static/img/logo.png"
+            alt="Logo"
+            onerror="this.style.display = 'none'"
+          />
+        </div>
+        <div class="nav-right">
+          <div class="nav-avatar" id="user-avatar">AD</div>
+          <span class="nav-name" id="user-name">Admin</span>
+          <button class="btn-signout" onclick="handleLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i>Sign out
+          </button>
+        </div>
+      </nav>
+
+      <div class="app-body">
+        <main class="main-area">
+          <div class="page active" id="page-report">
+            <div class="page-header">
+              <div class="page-header-left">
+                <h2 class="page-title" id="report-title">Loading report...</h2>
+              </div>
+              <div class="detail-actions">
+                <a
+                  class="action-link"
+                  id="details-link"
+                  href="machine-details.html"
+                >
+                  <i class="fa-solid fa-arrow-left"></i>Machine Details
+                </a>
+              </div>
+            </div>
+
+            <div class="page-body report-page-body" id="report-body">
+              <section class="report-section">
+                <div class="report-section-title">
+                  <span>Report Details</span>
+                </div>
+                <section class="card fr-info-card">
+                  <div class="fr-info-header">
+                    <span class="fr-info-header-icon">
+                      <i class="fa-solid fa-file-lines"></i>
+                    </span>
+                    <span class="fr-info-header-title">FR Information</span>
+                  </div>
+                  <div class="fr-info-split">
+                    <div class="fr-info-col" id="report-info-left"></div>
+                    <div
+                      class="fr-info-col fr-info-col-right"
+                      id="report-info-right"
+                    ></div>
+                  </div>
+                </section>
+              </section>
+              <section class="report-section">
+                <div class="report-section-title">
+                  <span>COP Status Overview</span>
+                </div>
+                <div class="report-stat-grid" id="cop-status-cards"></div>
+              </section>
+
+              <section class="report-section">
+                <div class="report-section-title">
+                  <span>Inspection Summary</span>
+                </div>
+                <div class="report-stat-grid" id="inspection-cards"></div>
+              </section>
+
+              <section class="report-section">
+                <div class="report-section-title">
+                  <span>Analytics Overview</span>
+                </div>
+                <div class="report-chart-grid">
+                  <article class="report-chart-card">
+                    <div class="report-chart-head">
+                      <div class="report-chart-title">
+                        <span class="chart-title-icon">
+                          <i class="fa-solid fa-chart-pie"></i>
+                        </span>
+                        <span>Unit Status</span>
+                      </div>
+                      <span class="chart-period">This Week</span>
+                    </div>
+                    <div class="donut-wrap">
+                      <canvas id="unit-status-chart"></canvas>
+                    </div>
+                  </article>
+
+                  <article class="report-chart-card">
+                    <div class="report-chart-head">
+                      <div class="report-chart-title">
+                        <span class="chart-title-icon">
+                          <i class="fa-solid fa-chart-pie"></i>
+                        </span>
+                        <span>COP Fill Level</span>
+                      </div>
+                      <span class="chart-period">This Week</span>
+                    </div>
+                    <div class="donut-wrap">
+                      <canvas id="cop-fill-chart"></canvas>
+                    </div>
+                  </article>
+                </div>
+              </section>
+
+              <section class="card card-pad mb-15">
+                <div class="card-title brand">
+                  <i class="fa-solid fa-triangle-exclamation"></i>Defect Table
+                </div>
+                <div class="data_table_responsive">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Job ID</th>
+                        <th>Cop Number</th>
+                        <th>Thread %</th>
+                        <th>Result</th>
+                        <th>Total Cops</th>
+                        <th>Good Cops</th>
+                        <th>Defect Count</th>
+                        <th>Full Cops</th>
+                        <th>Half Cops</th>
+                        <th>Quarter Cops</th>
+                        <th>Created At</th>
+                        <th>End At</th>
+                      </tr>
+                    </thead>
+                    <tbody id="defect-body"></tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../static/script/chart.umd.min.js"></script>
+    <script src="../static/script/report.js"></script>
+  </body>
+</html>

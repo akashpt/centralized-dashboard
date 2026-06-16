@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yarn - Slider Machine</title>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <link rel="stylesheet" href="../static/css/all.min.css" />
+    <link rel="stylesheet" href="../static/css/index.css" />
+  </head>
+  <body>
+    <div id="app" style="display: flex">
+      <nav class="top-nav">
+        <div class="nav-logo">
+          <img
+            src="../static/img/logo.png"
+            alt="Logo"
+            onerror="this.style.display = 'none'"
+          />
+        </div>
+        <div class="nav-right">
+          <div class="nav-avatar" id="user-avatar">AD</div>
+          <span class="nav-name" id="user-name">Admin</span>
+          <button class="btn-signout" onclick="handleLogout()">
+            <i class="fa-solid fa-right-from-bracket"></i>Sign out
+          </button>
+        </div>
+      </nav>
+
+      <div class="app-body">
+        <main class="main-area">
+          <div class="page active">
+            <div class="page-header machine-page-header">
+              <div class="page-header-left">
+                <div class="machine_image_div">
+                  <div>
+                    <img
+                      class="machine-detail-photo"
+                      id="slider-machine-photo"
+                      src="../static/img/machine_image.jpeg"
+                      alt="Machine"
+                    />
+                  </div>
+                  <div>
+                    <div class="page-crumb">
+                      <i class="fa-solid fa-industry"></i>Production Monitor
+                    </div>
+                    <h2 class="page-title">Machine Details</h2>
+                    <p class="page-subtitle">
+                      Live machine status, doff timing and production quality
+                      summary.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-actions">
+                <a class="action-link primary" href="index.html">
+                  <i class="fa-solid fa-table-cells-large"></i>Dashboard
+                </a>
+              </div>
+            </div>
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                margin-right: 40px;
+                margin-left: 40px;
+                margin-top: 10px;
+                margin-bottom: 10px;
+              "
+            >
+              <div
+                class="slider-filter-controls"
+                aria-label="Machine status filter"
+              >
+                <button
+                  class="slider-filter-btn active"
+                  type="button"
+                  data-slider-filter="all"
+                  onclick="filterSliderMachines('all', this)"
+                >
+                  All <span data-slider-count="all">0</span>
+                </button>
+                <button
+                  class="slider-filter-btn"
+                  type="button"
+                  data-slider-filter="running"
+                  onclick="filterSliderMachines('running', this)"
+                >
+                  Running <span data-slider-count="running">0</span>
+                </button>
+                <button
+                  class="slider-filter-btn"
+                  type="button"
+                  data-slider-filter="stopped"
+                  onclick="filterSliderMachines('stopped', this)"
+                >
+                  Stopped <span data-slider-count="stopped">0</span>
+                </button>
+              </div>
+              <div>
+                <button
+                  class="action-link"
+                  type="button"
+                  onclick="previousSlide()"
+                >
+                  <i class="fa-solid fa-chevron-left"></i>Previous
+                </button>
+                <button class="action-link" type="button" onclick="nextSlide()">
+                  Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+            <div class="page-body slider-machine-page" id="slider-body">
+              <div class="empty-state">Loading machine slides...</div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../static/script/slider-machine.js"></script>
+  </body>
+</html>
