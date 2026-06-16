@@ -17,7 +17,8 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWebChannel import QWebChannel
 
 from classes.bridge import Bridge
-from path import INDEX_PAGE, TEMPLATES_DIR, REPORT_PAGE
+from classes.live_data import create_tables
+from path import INDEX_PAGE, TEMPLATES_DIR
 
 
 # ==============================
@@ -30,7 +31,13 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Centralized Dashboard")
-        self.resize(1200, 800)
+        data = 1
+        if data == 1:
+            self.showMaximized()
+        elif data == 2:
+            self.resize(1200, 800)
+        else:
+            self.showFullScreen()
 
         # -----------------
         # Web View
@@ -98,8 +105,8 @@ class MainWindow(QMainWindow):
             )
             if hasattr(self.bridge, "sessionEnded"):
                 self.bridge.sessionEnded.emit()
-            if hasattr(self.bridge, "stopCamera"):
-                self.bridge.stopCamera()
+            # if hasattr(self.bridge, "stopCamera"):
+            #     self.bridge.stopCamera()
         except Exception as e:
             print("Shutdown cleanup error:", e)
 
@@ -111,7 +118,7 @@ class MainWindow(QMainWindow):
 # ==============================
 
 if __name__ == "__main__":
-
+    create_tables()
     app = QApplication(sys.argv)
 
     window = MainWindow()

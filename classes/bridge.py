@@ -1,9 +1,7 @@
-import base64
 from datetime import datetime
 import json
 import uuid
-
-import cv2
+from classes.live_data import fetch_live_machines,get_user
 from PyQt5.QtCore import QObject, QTimer, pyqtSignal, pyqtSlot
 
 
@@ -57,141 +55,12 @@ class Bridge(QObject):
         self._timer = QTimer(self)
         self._timer.setInterval(1000)
 
-        self._machines_data = {
-            "success": True,
-            "data": [
-                {
-                    "id": 1,
-                    "machine_no": 13,
-                    "live_datas": {
-                        "good": 16,
-                        "empty": 0,
-                        "defect": 0,
-                        "inspect": 16,
-                        "doff_end": "2026-05-19 15:06:24",
-                        "material": "wpsf_700_14s_spandex",
-                        "full_cops": 16,
-                        "half_cops": 0,
-                        "doff_start": "2026-05-19 15:06:24",
-                        "doff_number": 53,
-                        "quarter_cops": 0,
-                    },
-                    "report_datas": [
-                        {
-                            "good": 13,
-                            "empty": 0,
-                            "defect": 3,
-                            "inspect": 16,
-                            "doff_end": "2026-05-19 15:06:24",
-                            "material": "wpsf_700_14s_spandex",
-                            "full_cops": 13,
-                            "half_cops": 0,
-                            "doff_start": "2026-05-19 14:57:52",
-                            "doff_number": 52,
-                            "quarter_cops": 0,
-                        }
-                    ],
-                    "machine_status": "STOPPED",
-                    "status": 1,
-                    "created_at": "2026-05-08T11:50:26.000Z",
-                    "updated_at": "2026-05-19T11:52:34.000Z",
-                },
-                {
-                    "id": 2,
-                    "machine_no": 14,
-                    "live_datas": {
-                        "good": 84,
-                        "empty": 4,
-                        "defect": 8,
-                        "inspect": 96,
-                        "doff_end": "2026-05-19 16:18:40",
-                        "material": "lmmd_10s_spandex",
-                        "full_cops": 76,
-                        "half_cops": 12,
-                        "doff_start": "2026-05-19 15:42:12",
-                        "doff_number": 22,
-                        "quarter_cops": 8,
-                    },
-                    "report_datas": [
-                        {
-                            "good": 78,
-                            "empty": 6,
-                            "defect": 12,
-                            "inspect": 96,
-                            "doff_end": "2026-05-19 16:18:40",
-                            "material": "lmmd_10s_spandex",
-                            "full_cops": 72,
-                            "half_cops": 16,
-                            "doff_start": "2026-05-19 15:42:12",
-                            "doff_number": 22,
-                            "quarter_cops": 8,
-                        },
-                        {
-                            "good": 64,
-                            "empty": 0,
-                            "defect": 4,
-                            "inspect": 68,
-                            "doff_end": "2026-05-19 14:35:04",
-                            "material": "lmmd_10s_spandex",
-                            "full_cops": 60,
-                            "half_cops": 6,
-                            "doff_start": "2026-05-19 14:04:17",
-                            "doff_number": 21,
-                            "quarter_cops": 2,
-                        },
-                    ],
-                    "machine_status": "RUNNING",
-                    "status": 1,
-                    "created_at": "2026-05-08T11:50:26.000Z",
-                    "updated_at": "2026-05-19T12:18:40.000Z",
-                },
-                {
-                    "id": 3,
-                    "machine_no": 15,
-                    "live_datas": {
-                        "good": 40,
-                        "empty": 8,
-                        "defect": 2,
-                        "inspect": 50,
-                        "doff_end": "2026-05-19 16:05:09",
-                        "material": "wps_677_16s_spandex",
-                        "full_cops": 34,
-                        "half_cops": 10,
-                        "doff_start": "2026-05-19 15:20:33",
-                        "doff_number": 18,
-                        "quarter_cops": 6,
-                    },
-                    "report_datas": [
-                        {
-                            "good": 40,
-                            "empty": 8,
-                            "defect": 2,
-                            "inspect": 50,
-                            "doff_end": "2026-05-19 16:05:09",
-                            "material": "wps_677_16s_spandex",
-                            "full_cops": 34,
-                            "half_cops": 10,
-                            "doff_start": "2026-05-19 15:20:33",
-                            "doff_number": 18,
-                            "quarter_cops": 6,
-                        }
-                    ],
-                    "machine_status": "STOPPED",
-                    "status": 1,
-                    "created_at": "2026-05-08T11:50:26.000Z",
-                    "updated_at": "2026-05-19T12:05:09.000Z",
-                }
-            ],
-        }
-
+       
     def _json(self, payload):
         return json.dumps(payload)
 
     def _machine_data(self):
-        payload = self._machines_data
-        if not payload.get("success") or not isinstance(payload.get("data"), list):
-            return []
-        return payload["data"]
+        return fetch_live_machines()
 
     def _machine_id(self, machine):
         return f"machine-{machine.get('machine_no')}"
@@ -319,20 +188,30 @@ class Bridge(QObject):
 
     @pyqtSlot(str, str, result=str)
     def authenticate(self, username, password):
-        user = self._users.get(username.strip())
-        if not user or user["password"] != password:
-            return self._json({"ok": False, "error": "Invalid username or password"})
 
-        return self._json(
-            {
-                "ok": True,
-                "sessionId": self.session_id,
-                "user": {
-                    "name": user["name"],
-                    "initials": user["initials"],
-                },
+        user = get_user(username.strip())
+
+        if not user:
+            return self._json({
+                "ok": False,
+                "error": "User not found"
+            })
+
+        if user["password"] != password:
+            return self._json({
+                "ok": False,
+                "error": "Invalid password"
+            })
+
+        return self._json({
+            "ok": True,
+            "sessionId": self.session_id,
+            "user": {
+                "name": user["user_name"],
+                "initials": user["user_name"][:2].upper(),
+                "page_name": user["page_name"]
             }
-        )
+        })
 
     @pyqtSlot(result=str)
     def getMachines(self):
@@ -417,6 +296,6 @@ class Bridge(QObject):
         if self.app_ref and hasattr(self.app_ref, "load_page"):
             self.app_ref.load_page(page_name)
 
-    def stopCamera(self):
-        if self.cam_worker:
-            self.cam_worker.stop()
+    # def stopCamera(self):
+    #     if self.cam_worker:
+    #         self.cam_worker.stop()
